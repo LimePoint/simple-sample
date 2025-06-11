@@ -6,22 +6,30 @@ ARG OPSCHAIN_BASE_RUNNER
 FROM scratch as repo
 ADD ./repo.tar .
 
+# The repo (including the .git directory) is extracted into a scratch layer for improved caching.
+FROM scratch as trust_store
+ADD ./opschain-trust-store.tar .
+
 # OpsChain Step Runner Docker images must be based on an opschain-runner(-*) base image.
 FROM ${OPSCHAIN_BASE_RUNNER}
 
 # Run any Dockerfile commands that don't rely on the contents of the Git repository here to avoid rerunning them when the Git repo changes.
 
+# The step below adds the OpsChain trust store CA certificates to the image.
+COPY --link --chown=10001:10001 --from=trust_store / /etc/pki/ca-trust/source/anchors
+
 # The step below adds the Project Git repository (including the .git directory).
 # Specific files can be copied instead, e.g. `COPY --from=repo /Gemfile* .`, to improve caching and build performance.
-COPY --link --from=repo / .
+COPY --link --chown=10001:10001 --from=repo / .
 
 # Optional - the Git rev this change was created with. Useful when running automated changes to know the current branch.
 ARG GIT_REV
 ENV GIT_REV=$GIT_REV
 
-# The following steps are an internal OpsChain requirement to configure the Git repository. These must be present after adding the repo.tar file.
+# The following steps are an internal OpsChain requirement to configure the Git repository and trust_store. These must
+# be present after adding the repo and trust store files.
 ARG GIT_SHA
-RUN opschain_configure_project_repo.sh "$GIT_SHA"
+RUN update-ca-trust && opschain_configure_project_repo.sh "$GIT_SHA"
 
 # Add customer licence to runner
 COPY opschain.lic /
