@@ -1,0 +1,2 @@
+dns: &dns_val '.trial.limepoint.com'
+dns_value: *dns_val 
