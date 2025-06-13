@@ -1,2 +1,2 @@
-dns: &dns_val '.trial.limepoint.com'
-dns_value: *dns_val 
+dns: '.trial.limepoint.com'
+dns_value: 'myvalue
