@@ -29,7 +29,7 @@ ENV GIT_REV=$GIT_REV
 # The following steps are an internal OpsChain requirement to configure the Git repository and trust_store. These must
 # be present after adding the repo and trust store files.
 ARG GIT_SHA
-RUN update-ca-trust && opschain_configure_project_repo.sh "$GIT_SHA"
+RUN opschain_configure_project_repo.sh "$GIT_SHA"
 
 # Add customer licence to runner
 COPY opschain.lic /
@@ -42,11 +42,10 @@ COPY opschain.lic /
 # Run `bundle install` to install the Ruby dependencies into the image.
 # The use of `opschain-exec` with the env_context_json secret, means that any OpsChain secrets, or properties environment variables
 # will be available for Bundler configuration (eg for authentication details).
+# By default, the OpsChain lint command will be run  files to look for errors before execution. To skip linting, pass "false" to the
+# `bundle_and_lint.sh` script.
 USER opschain
 RUN --mount=type=secret,required=true,id=env_context_json,uid=10001,gid=10001,target=/opt/opschain/.opschain/step_context.json \
-    opschain-exec bundle install
-
-# Lint OpsChain files to look for errors before execution, this step is optional
-RUN opschain-lint
+    bundle_and_lint.sh
 
 # Run any Dockerfile commands that rely on using Ruby/Bundler here.
