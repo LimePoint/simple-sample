@@ -1,5 +1,7 @@
 Bundler.require
 
+puts "-------------------- #{OpsChain.properties}"
+
 action :ant_hello do
   sh 'echo ant do stuff'
 end
@@ -16,3 +18,4 @@ action :shell_hello do
 end
 
 action :default, steps: %i[ant_phase shell_hello]
+
