@@ -53,3 +53,15 @@ end
     OpsChain.logger.info "Hello from grandchild_#{i}"
   end
 end
+
+action :change_with_wait, description: 'Change with a wait step', steps: [:properties_1, OpsChain.wait_step, :properties_2]
+
+action :properties_1 do
+  OpsChain.logger.info("Starting properties_1 with #{JSON.pretty_generate(OpsChain.properties)}")
+  OpsChain.properties_for(:project).run_number = (OpsChain.properties.run_number || 0) + 1
+  OpsChain.properties_for(:environment).current_date = Time.now
+end
+
+action :properties_2 do
+  OpsChain.logger.info("Starting properties_2 with #{JSON.pretty_generate(OpsChain.properties)}")
+end
