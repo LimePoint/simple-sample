@@ -20,7 +20,7 @@ COPY --link --chown=10001:10001 --from=trust_store / /etc/pki/ca-trust/source/an
 
 # The step below adds the Project Git repository (including the .git directory).
 # Specific files can be copied instead, e.g. `COPY --from=repo /Gemfile* .`, to improve caching and build performance.
-COPY --link --chown=10001:10001 --from=repo / .
+COPY --link --chown=10001:10001 --from=repo / /opt/opschain/
 
 # Optional - the Git rev this change was created with. Useful when running automated changes to know the current branch.
 ARG GIT_REV
@@ -32,7 +32,7 @@ ARG GIT_SHA
 RUN opschain_configure_project_repo.sh "$GIT_SHA"
 
 # Add customer licence to runner
-COPY opschain.lic /
+COPY /opschain.lic /
 
 # Run any Dockerfile commands that rely on the contents of the Git repository here.
 
@@ -46,6 +46,7 @@ COPY opschain.lic /
 # `bundle_and_lint.sh` script.
 USER opschain
 RUN --mount=type=secret,required=true,id=env_context_json,uid=10001,gid=10001,target=/opt/opschain/.opschain/step_context.json \
+    --mount=type=secret,required=false,id=mintpress_license,uid=10001,gid=10001,target=/opt/opschain/.environmint/mintpress.license \
     bundle_and_lint.sh
 
 # Run any Dockerfile commands that rely on using Ruby/Bundler here.
