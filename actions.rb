@@ -1,5 +1,8 @@
 Bundler.require
 
+puts "ENV: #{ENV}"
+puts "Properties: #{Opschain.properties}"
+
 action :ant_hello, description: 'Echo hello with ant' do
   sh 'echo ant do stuff'
 end
