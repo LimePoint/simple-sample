@@ -1,7 +1,7 @@
 Bundler.require
 
-puts "ENV: #{ENV}"
-puts "Properties: #{Opschain.properties}"
+puts "ENV: #{ENV.inspect}"
+puts "Properties: #{OpsChain.properties}"
 
 action :ant_hello, description: 'Echo hello with ant' do
   sh 'echo ant do stuff'
