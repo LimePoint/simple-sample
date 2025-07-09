@@ -1,5 +1,6 @@
 Bundler.require
 
+puts "environment variables: #{ENV}"
 puts "-------------------- #{OpsChain.properties}"
 
 action :ant_hello do
