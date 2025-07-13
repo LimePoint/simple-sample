@@ -40,12 +40,12 @@ COPY /opschain.lic /
 # command below if you require access to OpsChain secrets and/or properties environment variables.
 
 # Run `bundle install` to install the Ruby dependencies into the image.
-# The use of `opschain-exec` with the env_context_json secret, means that any OpsChain secrets, or properties environment variables
+# The use of `opschain-exec` with the env_context_zip secret, means that any OpsChain secrets, or properties environment variables
 # will be available for Bundler configuration (eg for authentication details).
-# By default, the OpsChain lint command will be run  files to look for errors before execution. To skip linting, pass "false" to the
+# By default, the OpsChain lint command will be run to look for errors before execution. To skip linting, pass "false" to the
 # `bundle_and_lint.sh` script.
 USER opschain
-RUN --mount=type=secret,required=true,id=env_context_json,uid=10001,gid=10001,target=/opt/opschain/.opschain/step_context.json \
+RUN --mount=type=secret,required=true,id=env_context_zip,uid=10001,gid=10001,target=/opt/opschain/.opschain/step_context.json.zip \
     --mount=type=secret,required=false,id=mintpress_license,uid=10001,gid=10001,target=/opt/opschain/.environmint/mintpress.license \
     bundle_and_lint.sh
 
