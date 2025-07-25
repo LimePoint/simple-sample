@@ -24,8 +24,8 @@ action :single_step_action, description: 'Single step action' do
 end
 
 action :multi_level_action, steps: [:child_1, :child_2, :child_4], description: 'Multi level action' do
-  OpsChain.logger.info "Hello from multi level action, inserting one extra child"
-  OpsChain.child_steps = [:child_1, :child_2, :child_3, :child_4]
+  OpsChain.logger.info "Hello from multi level action, inserting one extra child and appending another"
+  OpsChain.child_steps = [:child_1, :child_2, :child_3, :child_4, :child_5]
 end
 
 action :child_1, description: 'my children are modified', run_as: :parallel, steps: [:grandchild_1, :grandchild_2] do
@@ -33,14 +33,15 @@ action :child_1, description: 'my children are modified', run_as: :parallel, ste
   OpsChain.append_child_steps(:grandchild_3)
 end
 
-action :child_2, description: 'my children are replaced', run_as: :parallel, steps: [:grandchild_3, :grandchild_4] do
+action :child_2, description: 'my children are replaced', run_as: :parallel, steps: [:grandchild_4, :grandchild_5] do
   OpsChain.logger.info "Replacing the steps entirely with a different count"
-  OpsChain.child_steps = [:grandchild_5]
+  OpsChain.child_steps = [:grandchild_4]
 end
 
 action :child_3, description: 'my children are replaced', run_as: :parallel, steps: [:grandchild_1, :grandchild_2, :grandchild_3] do
-  OpsChain.logger.info "Replacing the steps with the same number, but different actions"
-  OpsChain.child_steps = [:grandchild_4, :grandchild_5, :grandchild_6]
+  OpsChain.logger.info "Replacing the steps with the same number, but different actions and converting to sequential"
+  OpsChain.child_steps = [:grandchild_5, :grandchild_6, :grandchild_7]
+  OpsChain.child_execution_strategy=:sequential
 end
 
 action :child_4, description: 'my children are removed', run_as: :parallel, steps: [:grandchild_1, :grandchild_2, :grandchild_3] do
@@ -48,9 +49,16 @@ action :child_4, description: 'my children are removed', run_as: :parallel, step
   OpsChain.child_steps = []
 end
 
-(1..6).each do |i|
+action :child_5, description: 'my children are removed', run_as: :sequential, steps: [:grandchild_9, :grandchild_10, :grandchild_8] do
+  OpsChain.logger.info "Reordering the steps and converting to parallel"
+  OpsChain.child_steps = [:grandchild_8, :grandchild_9, :grandchild_10]
+  OpsChain.child_execution_strategy=:parallel
+end
+
+(1..10).each do |i|
   action "grandchild_#{i}" do
     OpsChain.logger.info "Hello from grandchild_#{i}"
+    OpsChain.child_steps = [:ant_phase] if i == 5
   end
 end
 
