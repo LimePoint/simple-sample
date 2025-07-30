@@ -73,3 +73,15 @@ end
 action :properties_2 do
   OpsChain.logger.info("Starting properties_2 with #{JSON.pretty_generate(OpsChain.properties)}")
 end
+
+action :many_parallel, steps: (1..20).map { |i| "many_parallel_child_#{i}" }, run_as: :parallel, description: 'Lots of steps in parallel'
+
+(1..20).each do |i|
+  action "many_parallel_child_#{i}", steps: ["nested_child_#{i}"]
+end
+
+(1..20).each do |i|
+  action "nested_child_#{i}" do
+    OpsChain.logger.info "Hello from nested_child_#{i}"
+  end
+end
