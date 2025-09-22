@@ -31,9 +31,6 @@ ENV GIT_REV=$GIT_REV
 ARG GIT_SHA
 RUN opschain_configure_project_repo.sh "$GIT_SHA"
 
-# Add customer licence to runner
-COPY /opschain.lic /
-
 # Run any Dockerfile commands that rely on the contents of the Git repository here.
 
 # Run any Dockerfile commands that rely on using `opschain-exec` here. Copy the --mount used in the "opschain-exec bundle install" RUN
