@@ -90,3 +90,10 @@ end
     log.info "Hello from nested_child_#{i}"
   end
 end
+
+action :dump_context, description: 'Print the OpsChain context' do
+  log.info('The Step Context JSON file is:')
+  log.info(JSON.pretty_generate(JSON.parse(OpsChain::Core::StepContext.step_context_json)))
+  log.info("\n\n\n\n\nThe OpsChain Context is:")
+  log.info(JSON.pretty_generate(OpsChain.context))
+end
