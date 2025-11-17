@@ -97,3 +97,10 @@ action :dump_context, description: 'Print the OpsChain context' do
   log.info("\n\n\n\n\nThe OpsChain Context is:")
   log.info(JSON.pretty_generate(OpsChain.context))
 end
+
+action :modify_properties, description: 'Test updating properties' do
+  OpsChain.properties_for(:project).project_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
+  OpsChain.properties_for(:template_version).template_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:asset).asset_current_date = Time.now.utc.iso8601
+end
