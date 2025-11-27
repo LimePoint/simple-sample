@@ -103,4 +103,5 @@ action :modify_properties, description: 'Test updating properties' do
   OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
   OpsChain.properties_for(:template_version).template_current_date = Time.now.utc.iso8601
   OpsChain.properties_for(:asset).asset_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
 end
