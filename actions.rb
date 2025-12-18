@@ -105,3 +105,18 @@ action :modify_properties, description: 'Test updating properties' do
   OpsChain.properties_for(:asset).asset_current_date = Time.now.utc.iso8601
   OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
 end
+
+child_steps = [:stop, :do_stuff, :start, :stop]
+child_steps.uniq.each do |child_step|
+  action child_step do
+    puts "running #{child_step}"
+  end
+end
+
+action :dummy_action do
+  puts "running dummy action"
+end
+
+action repeated_prereqs: child_steps, description: 'repeated prereqs'
+action :repeated_child, steps: child_steps, description: 'repeated child steps'
+action :repeated_tree, steps: [:repeated_child, :dummy_action, :repeated_child], description: 'repeated tree'
