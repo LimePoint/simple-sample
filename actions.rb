@@ -120,3 +120,10 @@ end
 action repeated_prereqs: child_steps, description: 'repeated prereqs'
 action :repeated_child, steps: child_steps, description: 'repeated child steps'
 action :repeated_tree, steps: [:repeated_child, :dummy_action, :repeated_child], description: 'repeated tree'
+
+action :failure_ignored, ignore_failure: true, description: 'test the ignore failure kwarg' do
+  log.info "Before failure"
+  raise "This is a failure to be ignored"
+end
+
+action :parent_of_ignore_failure, steps: [:failure_ignored], description: 'parent with an ignore failure child'
