@@ -23,7 +23,7 @@ action :single_step_action, description: 'Single step action' do
   log.info "Hello from single step action"
 end
 
-action :multi_level_action, steps: [:child_1, :child_2, :child_4], description: 'Multi level action' do
+action :multi_level_action, steps: [:child_1, :child_2, :child_4, :child_6, :child_7, :child_8, :child_9], description: 'Multi level action' do
   log.info "Hello from multi level action, inserting one extra child and appending another"
   OpsChain.child_steps = [:child_1, :child_2, :child_3, :child_4, :child_5]
 end
@@ -53,6 +53,12 @@ action :child_5, description: 'my children are removed', run_as: :sequential, st
   log.info "Reordering the steps and converting to parallel"
   OpsChain.child_steps = [:grandchild_8, :grandchild_9, :grandchild_10]
   OpsChain.child_execution_strategy=:parallel
+end
+
+(6..9).each do |i|
+  action "child_#{i}" do
+    log.info "Not actually executed, used to test removing steps from the multi_level_action parent"
+  end
 end
 
 (1..10).each do |i|
