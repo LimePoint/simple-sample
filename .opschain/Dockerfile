@@ -1,6 +1,7 @@
-# syntax = docker/dockerfile:1.4
+# syntax = docker/dockerfile:1.19
 
 ARG OPSCHAIN_BASE_RUNNER
+FROM hashicorp/terraform:1.9.7 as terraform
 
 # The repo (including the .git directory) is extracted into a scratch layer for improved caching.
 FROM scratch as repo
@@ -14,17 +15,20 @@ ADD ./opschain-trust-store.tar .
 FROM ${OPSCHAIN_BASE_RUNNER}
 
 # Run any Dockerfile commands that don't rely on the contents of the Git repository here to avoid rerunning them when the Git repo changes.
+COPY --from=terraform /bin/terraform /usr/local/bin/terraform
+RUN dnf install -y python3.12 python3.12-libs python3.12-pip openssl openssl-libs ca-certificates
+RUN update-ca-trust && python3.12 -m ensurepip && python3.12 -m pip install --upgrade pip setuptools wheel
 
 # The step below adds the OpsChain trust store CA certificates to the image.
 COPY --link --chown=10001:10001 --from=trust_store / /etc/pki/ca-trust/source/anchors
 
-# The step below adds the Project Git repository (including the .git directory).
-# Specific files can be copied instead, e.g. `COPY --from=repo /Gemfile* .`, to improve caching and build performance.
-COPY --link --chown=10001:10001 --from=repo / /opt/opschain/
+# The step below adds the Git repository (optionally including the .git directory).
+# Specific files can be copied instead (e.g. `COPY ... /Gemfile* .`) or excluded (e.g. `COPY ... --exclude=.git / .`, as done by default) to improve caching and build performance.
+COPY --link --chown=10001:10001 --from=repo --exclude=.git / /opt/opschain/
 
 # Optional - the Git rev this change was created with. Useful when running automated changes to know the current branch.
 ARG GIT_REV
-ENV GIT_REV=$GIT_REV
+# ENV GIT_REV=$GIT_REV
 
 # The following steps are an internal OpsChain requirement to configure the Git repository and trust_store. These must
 # be present after adding the repo and trust store files.
@@ -33,7 +37,7 @@ RUN opschain_configure_project_repo.sh "$GIT_SHA"
 
 # Run any Dockerfile commands that rely on the contents of the Git repository here.
 
-# Run any Dockerfile commands that rely on using `opschain-exec` here. Copy the --mount used in the "opschain-exec bundle install" RUN
+# Run any Dockerfile commands that rely on using `opschain-exec` here. Copy the --mount lines used in the "bundle_and_lint.sh" RUN
 # command below if you require access to OpsChain secrets and/or properties environment variables.
 
 # Run `bundle install` to install the Ruby dependencies into the image.

@@ -133,3 +133,7 @@ action :failure_ignored, ignore_failure: true, description: 'test the ignore fai
 end
 
 action :parent_of_ignore_failure, steps: [:failure_ignored], description: 'parent with an ignore failure child'
+
+action :python, description: 'run a python script' do
+  exec_command './sslversion.sh'
+end
