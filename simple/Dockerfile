@@ -49,4 +49,9 @@ RUN --mount=type=secret,required=true,id=env_context_zip,uid=10001,gid=10001,tar
     --mount=type=secret,required=false,id=mintpress_license,uid=10001,gid=10001,target=/opt/opschain/.environmint/mintpress.license \
     bundle_and_lint.sh
 
+RUN --mount=type=secret,required=true,id=env_context_zip,uid=10001,gid=10001,target=/opt/opschain/.opschain/step_context.json.zip \
+    --mount=type=secret,required=false,id=mintpress_license,uid=10001,gid=10001,target=/opt/opschain/.environmint/mintpress.license \
+    opschain-exec env && \
+    opschain-show-properties | jq
+
 COPY --from=repo --chmod=0755 simple/agent.sh /opt/opschain/agent.sh
