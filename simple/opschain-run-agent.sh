@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -eo pipefail -o nounset
 
 : "${NODE_ID}"
