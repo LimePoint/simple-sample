@@ -49,7 +49,7 @@ action :child_4, description: 'my children are removed', run_as: :parallel, step
   OpsChain.child_steps = []
 end
 
-action :child_5, description: 'my children are removed', run_as: :sequential, steps: [:grandchild_9, :grandchild_10, :grandchild_8] do
+action :child_5, description: 'my children are removed', run_as: :sequentia, steps: [:grandchild_9, :grandchild_10, :grandchild_8] do
   log.info "Reordering the steps and converting to parallel"
   OpsChain.child_steps = [:grandchild_8, :grandchild_9, :grandchild_10]
   OpsChain.child_execution_strategy=:parallel
