@@ -133,3 +133,32 @@ action :failure_ignored, ignore_failure: true, description: 'test the ignore fai
 end
 
 action :parent_of_ignore_failure, steps: [:failure_ignored], description: 'parent with an ignore failure child'
+
+action :input_step_change, steps: [
+  :print_properties,
+  :mod_properties,
+  OpsChain.input_step(
+    :name,
+    id: { type: :integer, path: '/input/id' },
+    optional_arg: { type: :float, required: false },
+    boolean_arg: { type: :boolean},
+    arg_with_desc: { description: "an argument with a description" },
+    arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
+  ),
+  :print_properties
+], description: 'Test that input steps can change properties'
+
+action :mod_properties do
+  OpsChain.properties_for(:asset).project_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
+end
+
+action :print_properties do
+  log.info("Current properties are: #{JSON.pretty_generate(OpsChain.properties)}")
+  log.info("Made up of: ")
+  log.info("Project properties: #{JSON.pretty_generate(OpsChain.properties_for(:project))}")
+  log.info("Environment properties: #{JSON.pretty_generate(OpsChain.properties_for(:environment))}") if OpsChain.context.parents.include?('environment')
+  log.info("Asset properties: #{JSON.pretty_generate(OpsChain.properties_for(:asset))}") if OpsChain.context.parents.include?('asset')
+  log.info("Template Version properties: #{JSON.pretty_generate(OpsChain.properties_for(:template_version))}") if OpsChain.context.include?('template_version')
+  log.info("Change properties: #{JSON.pretty_generate(OpsChain.properties_for(:change))}")
+end
