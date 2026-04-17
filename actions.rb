@@ -16,6 +16,7 @@ action :shell_hello, description: 'Echo hello with shell' do
 end
 
 action :default, steps: %i[ant_phase shell_hello], description: 'Default action' do
+  system('ls -la /opt/opschain /opt/mintpress')
   log.info "Inside default action - to test fluent-bit"
 end
 
