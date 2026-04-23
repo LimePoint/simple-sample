@@ -1,6 +1,6 @@
 Bundler.require
 
-action :ant_hello, description: 'Echo hello with ant' do
+action :ant_hello, description: 'Echo hello with ant', step_name: "ANT hello" do
   sh 'echo ant do stuff'
 end
 
@@ -9,6 +9,13 @@ action :ant_welcome do
 end
 
 action :ant_phase, steps: %i[ant_hello ant_welcome], run_as: :parallel
+
+action :ant_with_wait, description: 'Ant with a wait step', steps: [
+         :ant_hello,
+         OpsChain.wait_step(seconds: 5, step_name: '5 second wait'),
+         OpsChain.wait_step(step_name: 'Pause for ANT welcome'),
+         :ant_welcome
+       ]
 
 action :shell_hello, description: 'Echo hello with shell' do
   result = exec_command 'bash ./hello_world.sh'
