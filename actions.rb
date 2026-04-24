@@ -80,7 +80,7 @@ action :change_with_wait, description: 'Change with a wait step', steps: [:prope
 action :properties_1 do
   log.info("Starting properties_1 with #{JSON.pretty_generate(OpsChain.properties)}")
   OpsChain.properties_for(:project).run_number = (OpsChain.properties.run_number || 0) + 1
-  OpsChain.properties_for(:environment).current_date = Time.now
+  OpsChain.properties_for(:asset).current_date = Time.now
 end
 
 action :properties_2 do
