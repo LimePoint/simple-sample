@@ -145,12 +145,15 @@ action :input_step_change, steps: [
   :print_properties,
   :mod_properties,
   OpsChain.input_step(
-    :name,
-    id: { type: :integer, path: '/input/id' },
-    optional_arg: { type: :float, required: false },
-    boolean_arg: { type: :boolean},
-    arg_with_desc: { description: "an argument with a description" },
-    arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
+    input_arguments: [
+      :name,
+      id: { type: :integer, path: '/input/id' },
+      optional_arg: { type: :float, required: false },
+      boolean_arg: { type: :boolean},
+      arg_with_desc: { description: "an argument with a description" },
+      arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
+    ],
+    step_name: "Data request!"
   ),
   :print_properties
 ], description: 'Test that input steps can change properties'
