@@ -1,6 +1,6 @@
 Bundler.require
 
-action :ant_hello, description: 'Echo hello with ant' do
+action :ant_hello, description: 'Echo hello with ant', step_name: "ANT hello" do
   sh 'echo ant do stuff'
 end
 
@@ -9,6 +9,13 @@ action :ant_welcome do
 end
 
 action :ant_phase, steps: %i[ant_hello ant_welcome], run_as: :parallel
+
+action :ant_with_wait, description: 'Ant with a wait step', steps: [
+         :ant_hello,
+         OpsChain.wait_step(seconds: 5, step_name: '5 second wait'),
+         OpsChain.wait_step(step_name: 'Pause for ANT welcome'),
+         :ant_welcome
+       ]
 
 action :shell_hello, description: 'Echo hello with shell' do
   result = exec_command 'bash ./hello_world.sh'
@@ -73,7 +80,7 @@ action :change_with_wait, description: 'Change with a wait step', steps: [:prope
 action :properties_1 do
   log.info("Starting properties_1 with #{JSON.pretty_generate(OpsChain.properties)}")
   OpsChain.properties_for(:project).run_number = (OpsChain.properties.run_number || 0) + 1
-  OpsChain.properties_for(:environment).current_date = Time.now
+  OpsChain.properties_for(:asset).current_date = Time.now
 end
 
 action :properties_2 do
@@ -138,12 +145,15 @@ action :input_step_change, steps: [
   :print_properties,
   :mod_properties,
   OpsChain.input_step(
-    :name,
-    id: { type: :integer, path: '/input/id' },
-    optional_arg: { type: :float, required: false },
-    boolean_arg: { type: :boolean},
-    arg_with_desc: { description: "an argument with a description" },
-    arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
+    input_arguments: [
+      :name,
+      id: { type: :integer, path: '/input/id' },
+      optional_arg: { type: :float, required: false },
+      boolean_arg: { type: :boolean},
+      arg_with_desc: { description: "an argument with a description" },
+      arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
+    ],
+    step_name: "Data request!"
   ),
   :print_properties
 ], description: 'Test that input steps can change properties'
