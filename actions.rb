@@ -1,54 +1,30 @@
 Bundler.require
 
-action :action_1_child_child do
-  puts "FINDME HERE CHILD CHILD 1: #{OpsChain.properties_for(:change).to_json}"
+steps = []
+20.times do |idx|
+  action_name = :"action#{idx}"
+  steps << action_name
+  action "grand-#{idx}" do
+    puts "FINDME GRANDCHILD #{idx}"
+  end
+  action "blah-#{idx}", steps: ["grand-#{idx}"] do
+    puts "FINDME CHILD #{idx}"
+    OpsChain.properties_for(:change).blah = rand(0..10) > 3 ? 7 : {}
+    puts "FINDME CHILD: #{idx} -- #{OpsChain.properties_for(:change).to_json}"
+  end
+  action action_name, steps: ["blah-#{idx}"] do
+    OpsChain.properties_for(:change).blah = {
+      rand(1..100) => { a: "blah-#{rand(1..5)}" },
+      rand(1..100) => { b: "blah-#{rand(1..5)}" }
+    }
+    puts "FINDME HERE: #{idx} -- #{OpsChain.properties_for(:change).to_json}"
+    sleep rand(1..30)
+  end
 end
-
-action :action_1_child, steps: %i[action_1_child_child] do
-  puts "FINDME HERE CHILD 1: #{OpsChain.properties_for(:change).to_json}"
-end
-
-action :action_1, steps: [:action_2_child] do
-  sleep 5
-  OpsChain.properties_for(:change).blah = { x: { a: 'b' } }
-  puts "FINDME HERE 1: #{OpsChain.properties_for(:change).to_json}"
-  OpsChain.properties_for(:change).blah = { child: 7 }
-end
-
-action :action_2_child_child do
-  puts "FINDME HERE CHILD CHILD 2: #{OpsChain.properties_for(:change).to_json}"
-end
-
-action :action_2_child, steps: %i[action_2_child_child] do
-  puts "FINDME HERE CHILD 2: #{OpsChain.properties_for(:change).to_json}"
-  OpsChain.properties_for(:change).blah = { child: { b: 'x', q: 'x' } }
-end
-
-action :action_2, steps: [:action_2_child] do
-  sleep 1
-  OpsChain.properties_for(:change).blah = { x: { b: 'c' } }
-  puts "FINDME HERE 2: #{OpsChain.properties_for(:change).to_json}"
-end
-
-action :action_3_child_child do
-  puts "FINDME HERE CHILD CHILD 3: #{OpsChain.properties_for(:change).to_json}"
-end
-
-action :action_3_child, steps: %i[action_3_child_child] do
-  puts "FINDME HERE CHILD 3: #{OpsChain.properties_for(:change).to_json}"
-  OpsChain.properties_for(:change).blah = { child: { b: 'c' } }
-end
-
-action :action_3, steps: [:action_3_child] do
-  sleep 10
-  OpsChain.properties_for(:change).blah = { x: { b: 'c' } }
-  puts "FINDME HERE 3: #{OpsChain.properties_for(:change).to_json}"
-end
-
 
 action :end do
   puts 'END'
 end
 
-action :something, steps: %i[action_1 action_2 action_3], run_as: :parallel
+action :something, steps: steps, run_as: :parallel
 action :default, steps: %i[something end]
