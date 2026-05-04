@@ -24,6 +24,7 @@ end
 
 action :default, steps: %i[ant_phase shell_hello], description: 'Default action' do
   log.info "Inside default action - to test fluent-bit"
+  raise 'blah'
 end
 
 action :single_step_action, description: 'Single step action' do
