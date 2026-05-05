@@ -147,9 +147,10 @@ action :input_step_change, steps: [
   OpsChain.input_step(
     input_arguments: [
       :name,
-      id: { type: :integer, path: '/input/id' },
-      optional_arg: { type: :float, required: false },
-      boolean_arg: { type: :boolean},
+      id: { type: :integer, path: '/input/id', default_value: 123 },
+      optional_arg: { type: :array, required: false, default_value: ['a', 'b', 'c'] },
+      boolean_arg: { path: '/my_values', type: :boolean, default_value: true},
+      float_arg: { path: '/my_values', type: :float, default_value: 1234.56},
       arg_with_desc: { description: "an argument with a description" },
       arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
     ],
@@ -171,4 +172,52 @@ action :print_properties do
   log.info("Asset properties: #{JSON.pretty_generate(OpsChain.properties_for(:asset))}") if OpsChain.context.parents.include?('asset')
   log.info("Template Version properties: #{JSON.pretty_generate(OpsChain.properties_for(:template_version))}") if OpsChain.context.include?('template_version')
   log.info("Change properties: #{JSON.pretty_generate(OpsChain.properties_for(:change))}")
+end
+
+class MyController
+  def self.resource_type_actions = [:dummy_action]
+  def self.resource_type_properties = [:cont_property, :type_property]
+
+  def initialize(opts)
+    @opts = opts
+  end
+
+  def type_property=(value)
+    @opts[:type_property] = value
+  end
+  def cont_property = @opts[:cont_property]
+  def type_property = @opts[:type_property]
+
+  def dummy_action
+    log.info "Hello from the controller action! cont_property: #{cont_property}, type_property: #{type_property}"
+  end
+end
+
+resource_type :my_resource_type do
+  controller MyController
+
+  property :another_resource
+end
+
+my_resource_type :my_resource_1 do
+  cont_property 'a value from the resource'
+  type_property 'a value from the type'
+end
+
+my_resource_type :my_resource_2 do
+  cont_property 'a value from the resource'
+  type_property 'a value from the type'
+  another_resource :my_resource_1
+
+  action :resource_action do |res|
+    log.info "Hello from the my_resource_2"
+    log.info "the other resource is #{another_resource}"
+    log.info "my_resource_1 is #{my_resource_1}"
+    res.controller.type_property = :my_resource_1.controller
+    log.info "res.controller.type_property is #{res.controller.type_property}"
+  end
+end
+
+action :fred do
+  puts :my_resource_1.controller
 end
