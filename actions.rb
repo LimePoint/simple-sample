@@ -1,223 +1,316 @@
-Bundler.require
-
-action :ant_hello, description: 'Echo hello with ant', step_name: "ANT hello" do
-  sh 'echo ant do stuff'
+action :check_oracle_docs, description: 'Check Oracle Docs' do
+  exec_command 'curl -L https://updates.oracle.com'
 end
 
-action :ant_welcome do
-  sh 'echo ant do welcome stuff'
-end
+# require 'mintpress-infrastructure-oci'
+# require 'mintpress-dns-powerdns'
+# require_relative 'utility'
 
-action :ant_phase, steps: %i[ant_hello ant_welcome], run_as: :parallel
+# oci_config = '/opt/opschain/oci_platform_configs.yaml' # this will come from vault from projects settings
+# if OpsChain.dry_run?
+#   provider_config = {}
+# else
+#   provider_config = YAML.load_file(oci_config)
+# end
 
-action :ant_with_wait, description: 'Ant with a wait step', steps: [
-         :ant_hello,
-         OpsChain.wait_step(seconds: 5, step_name: '5 second wait'),
-         OpsChain.wait_step(step_name: 'Pause for ANT welcome'),
-         :ant_welcome
-       ]
+# environment_name = OpsChain.context.parents.environment.code
+# domain_name = OpsChain.properties.common_settings.hosts.domain_name
+# create_cnames = OpsChain.properties.common_settings.hosts.create_cnames
+# create_friendly_names = OpsChain.properties.common_settings.hosts.create_friendly_names
+# zone = OpsChain.properties.common_settings.hosts.zone
 
-action :shell_hello, description: 'Echo hello with shell' do
-  result = exec_command 'bash ./hello_world.sh'
-  log.info "Failed with: #{result.stderr}" if result.failed?
-end
+# common_host_properties = OpsChain.properties.common_settings.hosts
+# common_storage_properties = OpsChain.properties.common_settings.storage
 
-action :default, steps: %i[ant_phase shell_hello], description: 'Default action' do
-  log.info "Inside default action - to test fluent-bit"
-end
+# if common_host_properties.native_instance_type.include? 'Flex'
+#   common_host_properties = common_host_properties.merge(
+#       'use_flex': true,
+#       'specs.cpu_count': OpsChain.properties.common_settings.hosts.cpu,
+#       'specs.ram_gb': OpsChain.properties.common_settings.hosts.memory
+#   )
+# end
 
-action :single_step_action, description: 'Single step action' do
-  log.info "Hello from single step action"
-end
-
-action :multi_level_action, steps: [:child_1, :child_2, :child_4, :child_6, :child_7, :child_8, :child_9], description: 'Multi level action' do
-  log.info "Hello from multi level action, inserting one extra child and appending another"
-  OpsChain.child_steps = [:child_1, :child_2, :child_3, :child_4, :child_5]
-end
-
-action :child_1, description: 'my children are modified', run_as: :parallel, steps: [:grandchild_1, :grandchild_2] do
-  log.info "Appending a grandchild"
-  OpsChain.append_child_steps(:grandchild_3)
-end
-
-action :child_2, description: 'my children are replaced', run_as: :parallel, steps: [:grandchild_4, :grandchild_5] do
-  log.info "Replacing the steps entirely with a different count"
-  OpsChain.child_steps = [:grandchild_4]
-end
-
-action :child_3, description: 'my children are replaced', run_as: :parallel, steps: [:grandchild_1, :grandchild_2, :grandchild_3] do
-  log.info "Replacing the steps with the same number, but different actions and converting to sequential"
-  OpsChain.child_steps = [:grandchild_5, :grandchild_6, :grandchild_7]
-  OpsChain.child_execution_strategy=:sequential
-end
-
-action :child_4, description: 'my children are removed', run_as: :parallel, steps: [:grandchild_1, :grandchild_2, :grandchild_3] do
-  log.info "Now I don't have any steps"
-  OpsChain.child_steps = []
-end
-
-action :child_5, description: 'my children are removed', run_as: :sequential, steps: [:grandchild_9, :grandchild_10, :grandchild_8] do
-  log.info "Reordering the steps and converting to parallel"
-  OpsChain.child_steps = [:grandchild_8, :grandchild_9, :grandchild_10]
-  OpsChain.child_execution_strategy=:parallel
-end
-
-(6..9).each do |i|
-  action "child_#{i}" do
-    log.info "Not actually executed, used to test removing steps from the multi_level_action parent"
-  end
-end
-
-(1..10).each do |i|
-  action "grandchild_#{i}" do
-    log.info "Hello from grandchild_#{i}"
-    OpsChain.child_steps = [:ant_phase] if i == 5
-  end
-end
-
-action :change_with_wait, description: 'Change with a wait step', steps: [:properties_1, OpsChain.wait_step, :properties_2]
-
-action :properties_1 do
-  log.info("Starting properties_1 with #{JSON.pretty_generate(OpsChain.properties)}")
-  OpsChain.properties_for(:project).run_number = (OpsChain.properties.run_number || 0) + 1
-  OpsChain.properties_for(:asset).current_date = Time.now
-end
-
-action :properties_2 do
-  log.info("Starting properties_2 with #{JSON.pretty_generate(OpsChain.properties)}")
-end
-
-action :many_parallel, steps: (1..20).map { |i| "many_parallel_child_#{i}" }, run_as: :parallel, description: 'Lots of steps in parallel'
-
-(1..20).each do |i|
-  action "many_parallel_child_#{i}", steps: ["many_parallel_grandchild_#{i}"], run_as: :sequential
-end
-
-(1..20).each do |i|
-  action "many_parallel_grandchild_#{i}", steps: %w[nested_child_1 nested_child_2], run_as: :parallel
-end
+# infrastructure_oci_oci_platform :oci_test_platform do
+#   # properties YAML.load_file(oci_config)
+#   # properties lazy { YAML.load_file('/opt/opschain/oci_platform_configs1.yaml') }
+#   # properties lazy { provider_config }
+#   properties provider_config
+#   log_requests true
+#   identity_region 'AU'
+#   # assign_public_ip provider_config['oci_platform']['assign_public_ip'] #NOTE
+# end
 
 
-(1..2).each do |i|
-  action "nested_child_#{i}" do
-    log.info "Hello from nested_child_#{i}"
-  end
-end
+#  #chef-bootstrapper
+# infrastructure_chef_bootstrapper "chef" do
+#   chef_server_url 'https://mintpress-dm-primary.trial.limepoint.com:8443/organizations/environmint'
+#   chef_client_installer '/lib/cinc-client/cinc-client.rpm'
+#   knife_config_file '/opt/opschain/.cinc/knife.rb'
+#   chef_environment environment_name
+#   node_attributes OpsChain.properties.common_settings.hosts.node_attributes
+#   run_list OpsChain.properties.common_settings.hosts.run_list
+# end
 
-action :dump_context, description: 'Print the OpsChain context' do
-  log.info('The Step Context JSON file is:')
-  log.info(JSON.pretty_generate(JSON.parse(OpsChain::Core::StepContext.step_context_json)))
-  log.info("\n\n\n\n\nThe OpsChain Context is:")
-  log.info(JSON.pretty_generate(OpsChain.context))
-end
+# # security_rules
+# security_rules = YAML.load_file("#{__dir__}/oci-common/files/security_rules.yaml")
+# raise "Security rules is empty, I can make the VM but it's gonna be useless so I refuse to build it. Fix the security list file and retry. " if security_rules['security_rules'].nil?
+# sec_rules = []
+# rules = security_rules['security_rules']
+# rules['all'][0]['name'].each do | secrule |
+#   infrastructure_oci_oci_network_security_group secrule do
+#     display_name secrule
+#     platform oci_test_platform
+#   end
+#   sec_rules  << secrule
+# end
 
-action :modify_properties, description: 'Test updating properties' do
-  OpsChain.properties_for(:project).project_current_date = Time.now.utc.iso8601
-  OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
-  OpsChain.properties_for(:template_version).template_current_date = Time.now.utc.iso8601
-  OpsChain.properties_for(:asset).asset_current_date = Time.now.utc.iso8601
-  OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
-end
+# security_rules_actions = {}
+# %w(create get_display_name get_my_ocid get_vcn exists? remove).each do |action_name|
+#   security_rules_actions[action_name] = sec_rules.map { |h| "#{h}:#{action_name}" }
+# end
 
-child_steps = [:stop, :do_stuff, :start, :stop]
-child_steps.uniq.each do |child_step|
-  action child_step do
-    puts "running #{child_step}"
-  end
-end
+# %w(create remove).each do |act|
+#   action "security-rules-#{act}", steps: security_rules_actions[act].select { |ha| ha }, run_as: :parallel, description: "security-rules-#{act}"
+# end
 
-action :dummy_action do
-  puts "running dummy action"
-end
+# # Make list of all hosts and shared storage
+# all_hosts = []
+# a_dns_entries = []
+# cname_dns_entries = []
 
-action repeated_prereqs: child_steps, description: 'repeated prereqs'
-action :repeated_child, steps: child_steps, description: 'repeated child steps'
-action :repeated_tree, steps: [:repeated_child, :dummy_action, :repeated_child], description: 'repeated tree'
+# OpsChain.properties.assets.each do | asset_name, deets |
+#   deets.hosts.each do | host |
+#     short          = host.name.split(".")[0]
+#     cname_friendly = short.chomp(short[-2..-1]).concat(domain_name)
+#     cname_adm      = short.chomp(short[-2..-1]).concat('-adm').concat(domain_name)
+#     cname_priv     = short.concat('-prv').concat(domain_name)
 
-action :failure_ignored, ignore_failure: true, description: 'test the ignore failure kwarg' do
-  log.info "Before failure"
-  raise "This is a failure to be ignored"
-end
+#     if host.sso_cname_list
+#       create_sso_cnames = true
+#       sso_cnames = host.sso_cname_list
+#     end
 
-action :parent_of_ignore_failure, steps: [:failure_ignored], description: 'parent with an ignore failure child'
+#     # Every host gets a default storage, storage shd be defined earlier if required to attach host
+#     block_devices_to_attach = []
+#     host.storage.each do | str |
+#       infrastructure_oci_oci_storage str.storage_name do
+#         available_actions :create, :attach, :detach, :destroy
 
-action :input_step_change, steps: [
-  :print_properties,
-  :mod_properties,
-  OpsChain.input_step(
-    input_arguments: [
-      :name,
-      id: { type: :integer, path: '/input/id', default_value: 123 },
-      optional_arg: { type: :array, required: false, default_value: ['a', 'b', 'c'] },
-      boolean_arg: { path: '/my_values', type: :boolean, default_value: true},
-      float_arg: { path: '/my_values', type: :float, default_value: 1234.56},
-      arg_with_desc: { description: "an argument with a description" },
-      arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
-    ],
-    step_name: "Data request!"
-  ),
-  :print_properties
-], description: 'Test that input steps can change properties'
+#         properties common_storage_properties.merge(str)
+#         name str.storage_name # this is required bcoz of the DSL reference
+#         storage_name name
+#         platform oci_test_platform
+#       end
+#       block_devices_to_attach << str.storage_name
+#     end
 
-action :mod_properties do
-  OpsChain.properties_for(:asset).project_current_date = Time.now.utc.iso8601
-  OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
-end
 
-action :print_properties do
-  log.info("Current properties are: #{JSON.pretty_generate(OpsChain.properties)}")
-  log.info("Made up of: ")
-  log.info("Project properties: #{JSON.pretty_generate(OpsChain.properties_for(:project))}")
-  log.info("Environment properties: #{JSON.pretty_generate(OpsChain.properties_for(:environment))}") if OpsChain.context.parents.include?('environment')
-  log.info("Asset properties: #{JSON.pretty_generate(OpsChain.properties_for(:asset))}") if OpsChain.context.parents.include?('asset')
-  log.info("Template Version properties: #{JSON.pretty_generate(OpsChain.properties_for(:template_version))}") if OpsChain.context.include?('template_version')
-  log.info("Change properties: #{JSON.pretty_generate(OpsChain.properties_for(:change))}")
-end
+#     infrastructure_oci_oci_host host.name do
+#       available_actions :create, :start, :stop, :restart, :exists?, :destroy # only to show ui, else we can all any action
+#       # action_policies ignore_defined: true#, ignore_failure: true
+#       name "#{host.name}#{domain_name}"
+#       properties common_host_properties
+#       always_use_mintpress_bootstrap false
+#       bootstrap_with_dns false
+#       network_security_groups security_rules['security_rules']['default'][0]['name']
+#       # admin_final_user#NOTE
 
-class MyController
-  def self.resource_type_actions = [:dummy_action]
-  def self.resource_type_properties = [:cont_property, :type_property]
+#       platform oci_test_platform
+#       block_devices block_devices_to_attach
 
-  def initialize(opts)
-    @opts = opts
-  end
+#       action "#{host.name}:bootstrap": ["#{host.name}-setup-bootstrapper"]
+#       action "unbootstrap": ["#{host.name}-setup-bootstrapper"]
+#     end
+#     all_hosts << host.name
 
-  def type_property=(value)
-    @opts[:type_property] = value
-  end
-  def cont_property = @opts[:cont_property]
-  def type_property = @opts[:type_property]
+#     # OCI
+#     # create public/private A dns_entries
+#     ["public", "private"].each do |type|
+#       infrastructure_oci_oci_dns_entry "#{host.name}-#{type}-a-dns" do
+#         if type == "public"
+#           name   lazy { ref(host.name).controller.name } #NOTE
+#            values lazy { ref(host.name).controller.primary_public_ip }#NOTE
+#         else
+#           name   "#{cname_priv}"
+#           values lazy { ref(host.name).controller.primary_ip }
+#         end
+#         type     'A'
+#         zone     zone
+#         platform oci_test_platform
+#       end
+#     end
+#     action"#{host.name}-public-a-dns:create": ["#{host.name}:exists?"]
+#     a_dns_entries << "#{host.name}-public-a-dns" << "#{host.name}-private-a-dns"
 
-  def dummy_action
-    log.info "Hello from the controller action! cont_property: #{cont_property}, type_property: #{type_property}"
-  end
-end
+#     # construct hash to assit with iterative construction of infrastructure_oci_oci_dns_entry
+#     active_cnames = {}
+#     if create_cnames
+#       active_cnames["cname-dns"] = cname_friendly
+#     end
+#     if create_sso_cnames
+#       sso_cnames.each do |sso_cname|
+#         active_cnames["sso-#{sso_cname}-cname-dns"] = "#{sso_cname}#{domain_name}"
+#       end
+#     end
+#     active_cnames.each do |suffix, cname_value|
+#       resource_name = "#{host.name}-#{suffix}"
 
-resource_type :my_resource_type do
-  controller MyController
+#       infrastructure_oci_oci_dns_entry resource_name do
+#         name     "#{cname_value}"
+#         type     'CNAME'
+#         values   lazy { ref(host.name).controller.name }
+#         zone     zone
+#         platform oci_test_platform
+#       end
 
-  property :another_resource
-end
+#       cname_dns_entries << resource_name
+#     end
 
-my_resource_type :my_resource_1 do
-  cont_property 'a value from the resource'
-  type_property 'a value from the type'
-end
+#     ## power dns A entries
+#     #dns_targets = {
+#     #    "alpha" => "primary_dns",
+#     #    "omega" => "secondary_dns"
+#     #}
+#     #dns_targets.each do |suffix, config_key|
+#     #  infrastructure_power_dns_entry "#{host.name}_#{suffix}" do
+#     #    # ArgumentError: Attribute :name on MintPress::Infrastructure::PowerDnsEntry must be of type [String],
+#     #    # however you specified a MintPress::InfrastructureOci::OCIHost (#<MintPress::InfrastructureOci::OCIHost:0x00007ff71492fd20>)) (ArgumentError)
+#     #    name host.name
+#     #    # name literal { host.name }#NOTE
+#     #    #webserver_host provider_config['powerdns_platform'][config_key]
+#     #    #webserver_port 80
+#     #    #api_key        provider_config['powerdns_platform']['dns_api_key']
+#     #    type           'A'
+#     #    values         lazy { ref(host.name).controller.primary_ip }
+#     #  end
+#     #    # a_dns_entries << "#{host.name}_#{suffix}" # TODO: Enable for powerdns
+#     #end
+#     #
+#     #cname_types = {}
+#     #if create_cnames
+#     #  cname_types.merge!({"private" => cname_priv, "admin"   => cname_adm})
+#     #end
+#     #if create_friendly_names
+#     #  cname_types.merge!({"friendly" => cname_friendly})
+#     #end
+#     #
+#     #if create_sso_cnames
+#     #  sso_cnames.each do |sso_cname|
+#     #    cname_types["sso-#{sso_cname}"] = "#{sso_cname}#{domain_name}"
+#     #  end
+#     #end
+#     #cname_types.each do |type_label, cname_prefix|
+#     #  dns_targets.each do |suffix, config_key|
+#     #
+#     #    infrastructure_power_dns_entry "#{host.name}-power-dns-#{type_label}-cname-#{suffix}" do
+#     #      name           "#{cname_prefix}"
+#     #      #webserver_host provider_config['powerdns_platform'][config_key]
+#     #      #webserver_port 80
+#     #      #api_key        provider_config['powerdns_platform']['dns_api_key']
+#     #      type           'CNAME'
+#     #      values         lazy { ref(host.name).controller.name }
+#     #    end
+#     #      # cname_dns_entries << "#{host.name}-power-dns-#{type_label}-cname-#{suffix}" # TODO: Enable for powerdns
+#     #  end
+#     #end
 
-my_resource_type :my_resource_2 do
-  cont_property 'a value from the resource'
-  type_property 'a value from the type'
-  another_resource :my_resource_1
 
-  action :resource_action do |res|
-    log.info "Hello from the my_resource_2"
-    log.info "the other resource is #{another_resource}"
-    log.info "my_resource_1 is #{my_resource_1}"
-    res.controller.type_property = :my_resource_1.controller
-    log.info "res.controller.type_property is #{res.controller.type_property}"
-  end
-end
+#     # support for bootstrap
+#     resources_execute "#{host.name}-whoami" do
+#       name "whoami"
+#       host host.name
+#     end
 
-action :fred do
-  puts :my_resource_1.controller
-end
+#     #NOTE
+#     # we can use oci_host.disable_se_linux without having to use resources_file_utils
+#     # however, there is no way to control invocation of cix1obpotd01:disable_se_linux based on a property?
+#     if common_host_properties.disable_selinux
+#       resources_file_utils "#{host.name}-disable_se_linux" do
+#         host host.name
+#         file '/etc/selinux/config'
+#         pattern '^SELINUX=.*'
+#         line 'SELINUX=disabled # updated by script'
+#         as_admin true
+#       end
+
+#       action "#{host.name}-disable_selinux", description: "#{host.name}-disable_selinux" do
+#         se_enabled = ref(host.name).controller.transport&.execute('sestatus')&.stdout&.include?('enabled')
+#         if se_enabled
+#           OpsChain.append_child_steps(%I[#{host.name}-disable_se_linux:replace_lines #{host.name}:restart])#NOTE
+#         end
+#       end
+
+#     else
+#       # empty action to support  in child steps
+#       action "#{host.name}-disable_selinux", description: "#{host.name}-disable_selinux" do
+#       end
+#     end
+
+#     resources_file_utils "#{host.name}_add_mintpress_hosts_entry" do
+#       host host.name
+#       file '/etc/hosts'
+#       pattern lazy { ref(host.name).controller.primary_public_ip }
+#       line lazy { "#{ref(host.name).controller.primary_public_ip} #{ref(host.name).controller.name}" }
+#       as_admin true
+#     end
+#     action"#{host.name}_add_mintpress_hosts_entry:replace_or_add_lines": ["#{host.name}:exists?"]
+
+#     action "#{host.name}-add-mintpress-hosts-entry", description: "#{host.name}-add-mintpress-hosts-entry" do
+#       mint_ip = ref(host.name).controller.primary_public_ip
+#       host_entry_added = ref(host.name).controller.transport&.execute('cat /etc/hosts')&.stdout&.include?("#{mint_ip}")
+#       unless host_entry_added
+#         OpsChain.append_child_steps(%I[#{host.name}_add_mintpress_hosts_entry:replace_or_add_lines])
+#       end
+#     end
+#     action"#{host.name}-add-mintpress-hosts-entry": ["#{host.name}:exists?"]
+
+#     action "#{host.name}-setup-bootstrapper" do
+
+#       host_obj = ref(host.name).controller
+#       host_obj.bootstrap_with_dns = false if host_obj.bootstrap_with_dns
+#       host_obj.bootstrapper = ref('chef').controller
+#     end
+
+#     resources_file_utils "#{host.name}_remove_mintpress_hosts_entry" do
+#       host host.name
+#       file '/etc/hosts'
+#       pattern lazy { ref(host.name).controller.primary_public_ip }
+#       line 'BAR'
+#       as_admin true
+#     end
+#     action"#{host.name}_remove_mintpress_hosts_entry:delete_lines": ["#{host.name}:exists?"]
+
+#     bootstrap_steps = [
+#           "#{host.name}-whoami:execute",
+#           (common_host_properties.disable_selinux ? "#{host.name}:disable_se_linux" : nil),
+#           "#{host.name}-add-mintpress-hosts-entry",
+#           "#{host.name}:bootstrap",
+#           "#{host.name}_remove_mintpress_hosts_entry:delete_lines"
+#       ].compact
+
+#     action "#{host.name}-bootstrap", description: "#{host.name}-bootstrap", steps: bootstrap_steps
+
+#     # security rules update on infrastructure_oci_oci_host host.name
+
+#     action "#{host.name}-setup-security-rules" do
+#       host_obj = ref(host.name).controller
+
+#       update_security_rules(host_obj, rules['default'][0]['name'])
+
+#       if environment_name.match(/\b^(bpd|eng|och|shared-services|tas)/)
+#         update_security_rules(host_obj, rules['bpd_workload'][0]['name'])
+#       end
+#       if environment_name.match(/^core-services/)
+#         update_security_rules(host_obj, rules['tools_workload'][0]['name'])
+#       end
+#       if host.name.match(/\b^(stage|mintpress.*)\b/)
+#         update_security_rules(host_obj, rules['privileged_workload'][0]['name'])
+#       end
+
+#     end
+#     action "#{host.name}-update-security-rules": ["#{host.name}-setup-security-rules"], steps:["#{host.name}:update"]
+#   end
+# end
+
+# require_relative 'overlay-actions'
+# overlay_actions(all_hosts, a_dns_entries, cname_dns_entries)
