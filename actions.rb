@@ -141,6 +141,14 @@ end
 
 action :parent_of_ignore_failure, steps: [:failure_ignored], description: 'parent with an ignore failure child'
 
+action :failing_step do
+  raise "This is a failing step"
+end
+
+action :parallel_with_failing_child, steps: [:child_6, :failing_step, :failure_ignored], run_as: :parallel, ignore_failure: true, description: 'a parent with a failing child but ignoring the failure'
+
+action :sequential_with_failing_child, steps: [:child_6, :failing_step, :failure_ignored],  ignore_failure: true, description: 'a parent with a failing child but ignoring the failure'
+
 action :input_step_change, steps: [
   :print_properties,
   :mod_properties,
