@@ -149,6 +149,11 @@ action :parallel_with_failing_child, steps: [:child_6, :failing_step, :failure_i
 
 action :sequential_with_failing_child, steps: [:child_6, :failing_step, :failure_ignored],  ignore_failure: true, description: 'a parent with a failing child but ignoring the failure'
 
+action :deep_tree_with_failing_children,
+       run_as: :parallel,
+       steps: [:sequential_with_failing_child, :input_step_change, :parallel_with_failing_child, :dummy_action],
+       description: 'a deeper tree with multiple failing children but ignoring the failures'
+
 action :input_step_change, steps: [
   :print_properties,
   :mod_properties,
