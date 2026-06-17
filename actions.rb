@@ -8,7 +8,7 @@ action :ant_welcome do
   sh 'echo ant do welcome stuff'
 end
 
-action :ant_phase, steps: %i[ant_hello ant_welcome], run_as: :parallel
+action :ant_phase, steps: %i[ant_hello ant_welcome], run_as: :parallel, description: 'Run ant hello and welcome in parallel'
 
 action :ant_with_wait, description: 'Ant with a wait step', steps: [
          :ant_hello,
