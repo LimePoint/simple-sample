@@ -119,6 +119,18 @@ action :modify_properties, description: 'Test updating properties' do
   OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
 end
 
+action :multi_run_as,
+       steps: [:child_1, OpsChain.steps([:child_2, :child_3], run_as: :parallel), :child_4, OpsChain.steps([:child_5, :child_6], run_as: :sequential)],
+       run_as: :sequential,
+       description: 'Test multiple run_as values'
+
+action "Custom Step Name", description: 'Test custom step name'
+action "Another custom step"
+action "Extra custom step"
+action "Final custom step"
+
+action :with_custom_child, steps: ["Custom Step Name", :child_1, :another_custom_step, :ExTRA_cusTOM_Step, 'FINAL custom SteP'], description: 'Test custom child step name'
+
 child_steps = [:stop, :do_stuff, :start, :stop]
 child_steps.uniq.each do |child_step|
   action child_step do
