@@ -111,6 +111,40 @@ action :dump_context, description: 'Print the OpsChain context' do
   log.info(JSON.pretty_generate(OpsChain.context))
 end
 
+action :dump_trust_store, description: 'Report whether the OpsChain trust store CAs are trusted by this action' do
+  require 'openssl'
+
+  anchors_path = '/etc/pki/ca-trust/source/anchors'
+  effective_cert_file = ENV['SSL_CERT_FILE'] || OpenSSL::X509::DEFAULT_CERT_FILE
+  effective_cert_dir = ENV['SSL_CERT_DIR'] || OpenSSL::X509::DEFAULT_CERT_DIR
+  default_store = OpenSSL::X509::Store.new.tap(&:set_default_paths)
+
+  log.info("OpenSSL version: #{OpenSSL::OPENSSL_VERSION}")
+  log.info("SSL_CERT_FILE: #{ENV['SSL_CERT_FILE'].inspect}, SSL_CERT_DIR: #{ENV['SSL_CERT_DIR'].inspect}")
+  log.info("Compiled in default cert file: #{OpenSSL::X509::DEFAULT_CERT_FILE}, cert dir: #{OpenSSL::X509::DEFAULT_CERT_DIR}")
+  log.info("Effective cert file: #{effective_cert_file} (readable: #{File.readable?(effective_cert_file)})")
+  log.info("Effective cert dir: #{effective_cert_dir} (readable: #{File.readable?(effective_cert_dir)})")
+
+  if File.readable?(effective_cert_file)
+    log.info("Effective cert file holds #{File.read(effective_cert_file).scan('-----BEGIN CERTIFICATE-----').count} certificates")
+  end
+
+  uploaded_certificates = Dir.glob(File.join(anchors_path, '*')).select { |path| File.file?(path) }.sort.flat_map do |path|
+    File.read(path).scan(/-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m).map do |pem|
+      [File.basename(path), OpenSSL::X509::Certificate.new(pem)]
+    end
+  end
+
+  if uploaded_certificates.empty?
+    log.info("No certificates found in #{anchors_path} - nothing has been uploaded to the OpsChain trust store")
+  else
+    log.info("Certificates uploaded to the OpsChain trust store (from #{anchors_path}):")
+    uploaded_certificates.each do |filename, certificate|
+      log.info("  #{filename}: subject=#{certificate.subject}, expires=#{certificate.not_after.utc.iso8601}, trusted_by_this_action=#{default_store.verify(certificate)}")
+    end
+  end
+end
+
 action :modify_properties, description: 'Test updating properties' do
   OpsChain.properties_for(:project).project_current_date = Time.now.utc.iso8601
   OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
