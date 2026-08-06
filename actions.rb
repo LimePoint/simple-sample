@@ -269,3 +269,36 @@ end
 action :fred do
   puts :my_resource_1.controller
 end
+
+action "Test send_email", description: 'Ask for an email address then send an email to it', steps: [
+  OpsChain.input_step(
+    input_arguments: [
+      email_address: { type: :string, path: '/test_email', description: 'The address to send the test email to', gui_name: 'Email Address', overwrite: true }
+    ],
+    step_name: 'Request email address'
+  ),
+  "Send email"
+]
+
+action "Send email" do
+  email_address = OpsChain.properties.test_email_.email_address
+
+  log.info "Sending a test email to #{email_address}"
+
+  result = send_email(
+    to: email_address,
+    subject: "OpsChain test email from change #{OpsChain.context.change_.id}",
+    body: <<~BODY,
+      Hello from the simple-sample test_email action.
+
+      Change: #{OpsChain.context.change_.id}
+      Requested by: #{OpsChain.context.user_.name}
+      Sent at: #{Time.now.utc.iso8601}
+    BODY
+    attachments: [
+      { filename: 'properties.json', content: JSON.pretty_generate(OpsChain.properties), content_type: 'application/json' }
+    ]
+  )
+
+  log.info "The OpsChain API returned: #{result.inspect}"
+end
