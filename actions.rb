@@ -161,10 +161,11 @@ action :input_step_change, steps: [
     input_arguments: [
       :name,
       id: { type: :integer, path: '/input/id', default_value: 123 },
-      optional_arg: { type: :array, required: false, default_value: ['a', 'b', 'c'] },
+      optional_arg: { type: :array, required: false, default_value: %w[a b c] },
       boolean_arg: { path: '/my_values', type: :boolean, default_value: true},
-      float_arg: { path: '/my_float_values', type: :float, default_value: 1234.56},
-      arg_with_desc: { description: "an argument with a description" },
+      date_arg: { path: '/my_values', type: :date, default_value: '2024-01-01', valid_values: %w[2024-01-01 2024-12-31] },
+      float_arg: { path: '/my_values', type: :float, default_value: 1234.56, valid_values: [1234.56, 7890.12] },
+      arg_with_desc: { description: "an argument with a description", valid_values: %w[value1 value2 value3] },
       arg_with_default: { gui_name: "Argument With Default", default_value: "default value" }
     ],
     step_name: "Data request!"
