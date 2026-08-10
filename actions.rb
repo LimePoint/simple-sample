@@ -302,3 +302,15 @@ action "Send email" do
 
   log.info "The OpsChain API returned: #{result.inspect}"
 end
+
+action :pre_req do
+  log.info "I'm a prereq"
+end
+
+action "Another pre req" do
+  log.info "I'm another prereq"
+end
+
+action with_pre_reqs: [:PrE_ReQ, "anoTHER pRE req"], description: 'An action with a prereq' do
+  log.info "I'm the main action"
+end
