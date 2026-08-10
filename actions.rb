@@ -208,7 +208,11 @@ action :input_step_change, steps: [
 ], description: 'Test that input steps can change properties'
 
 action :mod_properties do
-  OpsChain.properties_for(:asset).project_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:project).project_current_date = Time.now.utc.iso8601
+  OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
+  OpsChain.properties_for(:asset).asset_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('asset')
+  OpsChain.properties_for(:template).template_current_date = Time.now.utc.iso8601 if OpsChain.context.include?('template')
+  OpsChain.properties_for(:template_version).template_version_current_date = Time.now.utc.iso8601 if OpsChain.context.include?('template_version')
   OpsChain.properties_for(:change).change_current_date = Time.now.utc.iso8601
 end
 
@@ -218,6 +222,7 @@ action :print_properties do
   log.info("Project properties: #{JSON.pretty_generate(OpsChain.properties_for(:project))}")
   log.info("Environment properties: #{JSON.pretty_generate(OpsChain.properties_for(:environment))}") if OpsChain.context.parents.include?('environment')
   log.info("Asset properties: #{JSON.pretty_generate(OpsChain.properties_for(:asset))}") if OpsChain.context.parents.include?('asset')
+  log.info("Template properties: #{JSON.pretty_generate(OpsChain.properties_for(:template))}") if OpsChain.context.include?('template')
   log.info("Template Version properties: #{JSON.pretty_generate(OpsChain.properties_for(:template_version))}") if OpsChain.context.include?('template_version')
   log.info("Change properties: #{JSON.pretty_generate(OpsChain.properties_for(:change))}")
 end
