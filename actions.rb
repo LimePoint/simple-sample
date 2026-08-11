@@ -250,11 +250,16 @@ resource_type :my_resource_type do
   controller MyController
 
   property :another_resource
+
+  log.info "Inside resource_type my_resource_type"
 end
 
 my_resource_type :my_resource_1 do
   cont_property 'a value from the resource'
   type_property 'a value from the type'
+
+  log.info "Inside resource my_resource_1"
+
 end
 
 my_resource_type :my_resource_2 do
