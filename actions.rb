@@ -333,4 +333,6 @@ action "dry_run input values", description: 'Dry run values differs to actual va
       dry_value: { type: :string, path: '/testing', gui_name: 'Has values', overwrite: true, valid_values: custom_list }
     ]),
   :ant_welcome
-]
+] do
+  log.info "Make me generate a step result"
+end
