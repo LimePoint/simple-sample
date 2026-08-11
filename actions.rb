@@ -319,3 +319,13 @@ end
 action with_pre_reqs: [:PrE_ReQ, "anoTHER pRE req"], description: 'An action with a prereq' do
   log.info "I'm the main action"
 end
+
+custom_list = OpsChain.dry_run? ? ['dry_value'] : %w[runtime_value another_runtime_value]
+
+action "dry_run input values", description: 'Dry run values differs to actual values', steps: [
+  OpsChain.input_step(
+    input_arguments: [
+      dry_value: { type: :string, path: '/testing', gui_name: 'Has values', overwrite: true, valid_values: custom_list }
+    ]),
+  :ant_welcome
+]
