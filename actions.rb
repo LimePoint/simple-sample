@@ -336,3 +336,16 @@ action "dry_run input values", description: 'Dry run values differs to actual va
 ] do
   log.info "Make me generate a step result"
 end
+
+action "Deploy A/B", description: 'Path separator: parent whose step name contains a /', steps: ["Run C/D", :ordinary_child]
+
+action "Run C/D", description: 'Path separator: child whose step name contains a /', steps: [:slash_grandchild]
+
+action :slash_grandchild, step_name: 'Grandchild E/F', description: 'Path separator: grandchild via the step_name kwarg' do
+  log.info "Hello from the grandchild - my step name is #{OpsChain.context.step_.step_name.inspect}"
+  log.info "My full path is #{OpsChain.context.step_.full_path.inspect}"
+end
+
+action :ordinary_child, step_name: 'Ordinary child', description: 'Path separator: sibling with no separator' do
+  log.info "Hello from the ordinary child - my full path is #{OpsChain.context.step_.full_path.inspect}"
+end
