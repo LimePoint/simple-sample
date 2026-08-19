@@ -349,3 +349,14 @@ end
 action :ordinary_child, step_name: 'Ordinary child', description: 'Path separator: sibling with no separator' do
   log.info "Hello from the ordinary child - my full path is #{OpsChain.context.step_.full_path.inspect}"
 end
+
+opschain_cli('version', run_in_dry_run: true)
+opschain_cli('info', 'get')
+
+action :cli_check, description: 'Exercise the opschain CLI from inside a step', step_name: 'OpsChain CLI check' do
+  log.info "OPSCHAIN_API_URL is #{ENV['OPSCHAIN_API_URL'].inspect}"
+
+  change = JSON.parse(opschain_cli('changes', 'get', OpsChain.context.change_.id, '-o', 'json').stdout)
+
+  log.info "The CLI sees this change as action #{change.dig('attributes', 'action').inspect}, status #{change.dig('attributes', 'status_code').inspect}"
+end
