@@ -414,10 +414,10 @@ class ReloadCheckController
     @opts = opts
   end
 
-  def inherited_reload = log.info("inherited_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
-  def redeclared_reload = log.info("redeclared_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
-  def dsl_reload = log.info("dsl_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
-  def plain_reload = log.info("plain_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def inherited_reload = OpsChain.logger.info("inherited_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def redeclared_reload = OpsChain.logger.info("redeclared_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def dsl_reload = OpsChain.logger.info("dsl_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def plain_reload = OpsChain.logger.info("plain_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
 end
 
 resource_type :reload_check_type do
