@@ -406,3 +406,40 @@ action :parallel_reload_check, description: 'Pause, then run the parallel reload
   OpsChain.wait_step(step_name: 'Pause before the parallel pair'),
   :parallel_reload_pair
 ]
+
+$reload_actions_parsed_at = Time.now.utc.iso8601(3)
+
+class ReloadCheckController
+  def initialize(opts)
+    @opts = opts
+  end
+
+  def inherited_reload = log.info("inherited_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def redeclared_reload = log.info("redeclared_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def dsl_reload = log.info("dsl_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+  def plain_reload = log.info("plain_reload ran from an actions.rb parsed at #{$reload_actions_parsed_at}")
+end
+
+resource_type :reload_check_type do
+  controller ReloadCheckController, available_actions: [
+    { name: 'inherited_reload', description: 'Flagged in the controller available_actions entry', reload_actions: true },
+    { name: 'redeclared_reload', description: 'Flagged only where a resource re-declares available_actions' },
+    { name: 'dsl_reload', description: 'Flagged only where a resource uses the reload_actions DSL' },
+    { name: 'plain_reload', description: 'Never flagged' }
+  ]
+end
+
+reload_check_type :reload_inherits do
+  log.info 'Inside resource reload_inherits'
+end
+
+reload_check_type :reload_redeclares do
+  available_actions [
+    { name: 'redeclared_reload', description: 'Flagged in this resource available_actions entry', reload_actions: true, step_name: 'Redeclared reload step' },
+    { name: 'plain_reload', description: 'Never flagged' }
+  ]
+end
+
+reload_check_type :reload_dsl do
+  reload_actions :dsl_reload
+end
