@@ -384,7 +384,7 @@ action :reload_actions_check, description: 'Compare the actions.rb parse time ei
   :report_parse_time_reloaded
 ]
 
-reload_children = OpsChain.properties.dig('reload_check', 'children').to_s.split(',').map(&:strip).reject(&:empty?)
+reload_children = OpsChain.properties.dig('reload_check', 'children').to_s.split(',').map(&:strip).reject(&:empty?).reject { it == 'no_such_action' }
 
 action :reload_children_parent, reload_actions: true, description: 'Children are whatever the reload_check/children property said when this actions.rb was parsed', steps: (reload_children == ['none'] ? [] : reload_children.presence || [:ant_hello]) do
   log.info "Parsed with children: #{reload_children.inspect}"
