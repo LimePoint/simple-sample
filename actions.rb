@@ -360,3 +360,26 @@ action :cli_check, description: 'Exercise the opschain CLI from inside a step', 
 
   log.info "The CLI sees this change as action #{change.dig('attributes', 'action').inspect}, status #{change.dig('attributes', 'status_code').inspect}"
 end
+
+actions_rb_parsed_at = Time.now.utc.iso8601
+
+action :report_parse_time, description: 'Reports when the actions.rb it ran from was parsed' do
+  log.info "This step ran from an actions.rb parsed at #{actions_rb_parsed_at}"
+  log.info "The step itself is running at #{Time.now.utc.iso8601}"
+end
+
+action :report_parse_time_reloaded, reload_actions: true, description: 'Reports the actions.rb parse time after forcing a fresh parse' do
+  log.info "This step ran from an actions.rb parsed at #{actions_rb_parsed_at}"
+  log.info "The step itself is running at #{Time.now.utc.iso8601}"
+end
+
+action :reload_actions_check, description: 'Compare the actions.rb parse time either side of an input step', steps: [
+  :report_parse_time,
+  OpsChain.input_step(
+    input_arguments: [
+      reload_marker: { type: :string, path: '/reload_check', gui_name: 'Reload marker', overwrite: true }
+    ],
+    step_name: 'Provide a reload marker'
+  ),
+  :report_parse_time_reloaded
+]
