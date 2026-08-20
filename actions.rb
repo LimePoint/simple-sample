@@ -383,3 +383,26 @@ action :reload_actions_check, description: 'Compare the actions.rb parse time ei
   ),
   :report_parse_time_reloaded
 ]
+
+reload_children = OpsChain.properties.dig('reload_check', 'children').to_s.split(',').map(&:strip).reject(&:empty?)
+
+action :reload_children_parent, reload_actions: true, description: 'Children are whatever the reload_check/children property said when this actions.rb was parsed', steps: (reload_children == ['none'] ? [] : reload_children.presence || [:ant_hello]) do
+  log.info "Parsed with children: #{reload_children.inspect}"
+end
+
+action :reload_children_check, description: 'A flagged stage step whose children are decided by an input step', steps: [
+  OpsChain.input_step(
+    input_arguments: [
+      children: { type: :string, path: '/reload_check', gui_name: 'Child actions', description: 'Comma separated action names, or "none" for no children', default_value: 'ant_welcome,shell_hello', overwrite: true }
+    ],
+    step_name: 'Choose the child actions'
+  ),
+  :reload_children_parent
+]
+
+action :parallel_reload_pair, run_as: :parallel, description: 'Parallel siblings, one forked from the server and one forced to reparse', steps: [:report_parse_time, :report_parse_time_reloaded]
+
+action :parallel_reload_check, description: 'Pause, then run the parallel reload pair', steps: [
+  OpsChain.wait_step(step_name: 'Pause before the parallel pair'),
+  :parallel_reload_pair
+]
