@@ -302,3 +302,10 @@ action "Send email" do
 
   log.info "The OpsChain API returned: #{result.inspect}"
 end
+
+mintmodel_root_paths = mintmodel_actions.map { |mintmodel_action| mintmodel_action[:full_path] }
+lifecycle_mintmodel_paths = mintmodel_root_paths.grep(/\A(Shutdown|Startup)\z/)
+
+action :mintmodel_lifecycle,
+       steps: [:print_properties, *lifecycle_mintmodel_paths, :dummy_action],
+       description: "Interleave local actions with #{lifecycle_mintmodel_paths.count} of the #{mintmodel_root_paths.count} MintModel actions this asset exposes"
