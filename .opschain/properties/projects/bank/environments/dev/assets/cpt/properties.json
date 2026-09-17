@@ -1,0 +1,5 @@
+{
+  "layer_probe": { "asset_cpt_repo": ".opschain/properties/projects/bank/environments/dev/assets/cpt/properties.json" },
+  "winner": "asset_cpt_repo",
+  "template_vs_asset": "asset"
+}

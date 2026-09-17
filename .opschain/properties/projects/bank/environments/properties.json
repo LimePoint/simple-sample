@@ -1,0 +1,4 @@
+{
+  "layer_probe": { "environment_all_repo": ".opschain/properties/projects/bank/environments/properties.json" },
+  "winner": "environment_all_repo"
+}

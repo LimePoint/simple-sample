@@ -1,0 +1,5 @@
+{
+  "layer_probe": { "template_folder_repo": "simple/properties.json" },
+  "winner": "template_folder_repo",
+  "template_vs_asset": "template"
+}
