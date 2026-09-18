@@ -145,6 +145,32 @@ action :dump_trust_store, description: 'Report whether the OpsChain trust store 
   end
 end
 
+def cp_layers_stamp(level, key)
+  properties = OpsChain.properties_for(level)
+  properties.layer_probe = (properties.layer_probe&.to_h || {}).merge(key => "#{key} written by the #{level} level during the action")
+  properties.winner = key
+  log.info("stamped #{level} with #{key}")
+end
+
+action :cp_layers_modify, description: 'Rewrite the converged properties layer probe at every database level' do
+  log.info("layer_probe before the action: #{JSON.pretty_generate(OpsChain.properties.layer_probe.to_h)}")
+  log.info("winner before the action: #{OpsChain.properties.winner}")
+
+  cp_layers_stamp(:project, 'project_db_post')
+  cp_layers_stamp(:environment, 'environment_db_post') if OpsChain.context.parents.include?('environment')
+  cp_layers_stamp(:template, 'template_db_post') if OpsChain.context.include?('template')
+  cp_layers_stamp(:template_version, 'template_version_db_post') if OpsChain.context.include?('template_version')
+  cp_layers_stamp(:asset, 'asset_db_post') if OpsChain.context.parents.include?('asset')
+  cp_layers_stamp(:change, 'change_db_post')
+end
+
+action :cp_layers_print, description: 'Print the converged properties layer probe' do
+  log.info("layer_probe: #{JSON.pretty_generate(OpsChain.properties.layer_probe.to_h)}")
+  log.info("winner: #{OpsChain.properties.winner}")
+end
+
+action :cp_layers_phases, steps: %i[cp_layers_print cp_layers_modify cp_layers_print], description: 'Print, modify, then print the converged properties layer probe'
+
 action :modify_properties, description: 'Test updating properties' do
   OpsChain.properties_for(:project).project_current_date = Time.now.utc.iso8601
   OpsChain.properties_for(:environment).environment_current_date = Time.now.utc.iso8601 if OpsChain.context.parents.include?('environment')
