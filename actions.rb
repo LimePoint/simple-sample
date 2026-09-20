@@ -469,3 +469,131 @@ end
 reload_check_type :reload_dsl do
   reload_actions :dsl_reload
 end
+
+# ===========================================================================
+# Approval step DSL coverage
+# ===========================================================================
+
+%w[alpha bravo charlie delta].each do |probe|
+  action "appr_probe_#{probe}", description: "Approval probe #{probe}" do
+    log.info "Approval probe #{probe} ran at #{Time.now.utc.iso8601(3)}"
+  end
+end
+
+action :appr_failing_probe, description: 'A probe that always fails' do
+  raise 'appr_failing_probe always fails'
+end
+
+action :appr_user_gate, description: 'Gate on a single named user', steps: [
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[dana] }]),
+  :appr_probe_bravo
+]
+
+action :appr_group_gate, description: 'Gate on a single LDAP group', steps: [
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ ldap_groups: %w[release-managers] }]),
+  :appr_probe_bravo
+]
+
+action :appr_either_gate, description: 'One requirement naming a user and a group, either may approve', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[heidi], ldap_groups: %w[security-officers] }]),
+  :appr_probe_alpha
+]
+
+action :appr_both_gate, description: 'Two requirements, both must be approved before the step completes', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[dana] }, { ldap_groups: %w[security-officers] }]),
+  :appr_probe_alpha
+]
+
+action :appr_gate_with_children, description: 'Approval gate whose children run once it is approved', steps: [
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ ldap_groups: %w[ops-team] }], steps: %i[appr_probe_bravo appr_probe_charlie]),
+  :appr_probe_delta
+]
+
+action :appr_named_gate, description: 'Approval gate with an explicit step name', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ ldap_groups: %w[release-managers] }], step_name: 'Change advisory board sign off'),
+  :appr_probe_alpha
+]
+
+action :appr_parallel_children_gate, description: 'Approval gate wrapping a parallel children wrapper', steps: [
+  OpsChain.approval_step(
+    requires_approval_from: [{ user_names: %w[frank] }],
+    steps: [OpsChain.steps(%i[appr_probe_alpha appr_probe_bravo], run_as: :parallel)]
+  )
+]
+
+action :appr_ignore_failure_gate, description: 'Approval gate that ignores the failure of its child', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[grace] }], steps: [:appr_failing_probe], ignore_failure: true),
+  :appr_probe_alpha
+]
+
+action :appr_wrapped_step, description: 'OpsChain.step nests the wrapped action beneath an approval gate', steps: [
+  :appr_probe_alpha,
+  OpsChain.step(:appr_probe_bravo, requires_approval_from: [{ ldap_groups: %w[ops-team] }]),
+  :appr_probe_charlie
+]
+
+action :appr_wrapped_named_step, description: 'OpsChain.step with an explicit wait_step_name and two named approvers', steps: [
+  OpsChain.step(:appr_probe_delta, requires_approval_from: [{ user_names: %w[dana erin] }], wait_step_name: 'Approve the delta probe')
+]
+
+action :appr_direct_attribute, description: 'An ordinary action that declares its own approvers', requires_approval_from: [{ ldap_groups: %w[dba-team] }] do
+  log.info 'appr_direct_attribute ran after its approval was granted'
+end
+
+action :appr_direct_parent, description: 'Parent of the action that declares its own approvers', steps: [
+  :appr_probe_alpha,
+  :appr_direct_attribute,
+  :appr_probe_bravo
+]
+
+action :appr_root_attribute, description: 'A change root action that declares its own approvers', requires_approval_from: [{ ldap_groups: %w[release-managers] }], steps: [:appr_probe_alpha]
+
+action :appr_two_gates, description: 'Two sibling approval gates, both deriving the same step name', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[dana] }]),
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[erin] }]),
+  :appr_probe_bravo
+]
+
+action :appr_mixed_gates, description: 'A wait step, an input step and an approval step as siblings', steps: [
+  OpsChain.wait_step(step_name: 'Plain wait'),
+  OpsChain.input_step(
+    input_arguments: [approver_note: { type: :string, path: '/approval_check', gui_name: 'Approver note', default_value: 'none', overwrite: true }],
+    step_name: 'Collect an approver note'
+  ),
+  OpsChain.approval_step(requires_approval_from: [{ ldap_groups: %w[release-managers] }]),
+  :appr_probe_alpha
+]
+
+action :appr_unknown_identities, description: 'Names an unknown user and an unknown group alongside a real approver', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[nosuchuser dana], ldap_groups: %w[no-such-group] }]),
+  :appr_probe_alpha
+]
+
+action :appr_uncached_group, description: 'Names a group that exists in the directory but is not held in the OpsChain cache', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[dana], ldap_groups: %w[auditors] }]),
+  :appr_probe_alpha
+]
+
+action :appr_mixed_case, description: 'Approver names supplied in a different case to the directory', steps: [
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[DANA], ldap_groups: %w[Release-Managers] }]),
+  :appr_probe_alpha
+]
+
+action :appr_nested_inner, description: 'Inner stage holding an approval gate', steps: [
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ ldap_groups: %w[security-officers] }], steps: [:appr_probe_bravo])
+]
+
+action :appr_nested_middle, description: 'Middle stage of the nested approval tree', steps: [:appr_nested_inner, :appr_probe_charlie]
+
+action :appr_nested_outer, description: 'An approval gate three levels below the change root', steps: [:appr_nested_middle, :appr_probe_delta]
+
+action :appr_reject_me, description: 'A gate meant to be rejected, so its children never run', steps: [
+  :appr_probe_alpha,
+  OpsChain.approval_step(requires_approval_from: [{ user_names: %w[erin] }], steps: %i[appr_probe_bravo appr_probe_charlie]),
+  :appr_probe_delta
+]
