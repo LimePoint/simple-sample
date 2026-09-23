@@ -597,3 +597,44 @@ action :appr_reject_me, description: 'A gate meant to be rejected, so its childr
   OpsChain.approval_step(requires_approval_from: [{ user_names: %w[erin] }], steps: %i[appr_probe_bravo appr_probe_charlie]),
   :appr_probe_delta
 ]
+
+require 'digest'
+
+module SensitiveProbe
+  def self.report(logger, label, value)
+    logger.info "#{label}: present=#{!value.nil?}"
+    logger.info "#{label}: sha256=#{Digest::SHA256.hexdigest(value.to_s)}"
+    logger.info "#{label}: still_encrypted=#{value.to_s.start_with?('{AES')}"
+    logger.info "#{label}: echoed=#{value}"
+  end
+end
+
+action :sens_report, description: 'Reports on the sensitive database password without revealing it' do
+  SensitiveProbe.report(log, 'sens_report', OpsChain.properties.sens.db.password)
+  log.info "sens_report: dump_is_ciphertext=#{OpsChain.properties.to_h.dig(:sens, :db, :password).to_s.start_with?('{AES')}"
+  OpsChain.properties_for(:change).sens_touched = Time.now.utc.iso8601
+end
+
+action :sens_input_step, description: 'A sensitive input argument supplied to an input step', steps: [
+  OpsChain.input_step(
+    input_arguments: [
+      password: { type: :sensitive, path: '/sens/db', gui_name: 'Database password', overwrite: true }
+    ],
+    step_name: 'Supply the database password'
+  ),
+  :sens_report
+]
+
+action :sens_fixed_report, description: 'Reports on the encrypted asset property without revealing it' do
+  SensitiveProbe.report(log, 'sens_fixed_report', OpsChain.properties.sens.fixed.password)
+end
+
+action :sens_confirm_fixed, description: 'A sensitive input argument that must match an existing encrypted property', steps: [
+  OpsChain.input_step(
+    input_arguments: [
+      password: { type: :sensitive, path: '/sens/fixed', gui_name: 'Confirm the password' }
+    ],
+    step_name: 'Confirm the fixed password'
+  ),
+  :sens_fixed_report
+]
