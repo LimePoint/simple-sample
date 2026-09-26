@@ -1,4 +1,5 @@
 Bundler.require
+require 'interactor'
 
 action :ant_hello, description: 'Echo hello with ant', step_name: "ANT hello" do
   sh 'echo ant do stuff'
