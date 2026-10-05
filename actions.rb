@@ -235,3 +235,26 @@ end
 action :fred do
   puts :my_resource_1.controller
 end
+
+ARTEFACT_SMOKE_CODE = 'smoke_dsl_artefact'
+ARTEFACT_SMOKE_MARKER = 'artefact-dsl-smoke-test-content-marker'
+
+action :artefact_store, description: 'Store an artefact from the DSL' do
+  File.write('smoke_dsl_artefact.txt', "#{ARTEFACT_SMOKE_MARKER}\n")
+  OpsChain.artefact.store(ARTEFACT_SMOKE_CODE, 'smoke_dsl_artefact.txt', labels: ['dsl'])
+  log.info 'Stored artefact: smoke_dsl_artefact'
+end
+
+action :artefact_load, description: 'Load an artefact from the DSL' do
+  content = File.read(OpsChain.artefact.load(ARTEFACT_SMOKE_CODE))
+  raise "Unexpected artefact content: #{content}" unless content.include?(ARTEFACT_SMOKE_MARKER)
+
+  log.info "Loaded artefact: #{content}"
+end
+
+action :artefact_load_labelled, description: 'Load a labelled artefact from the DSL' do
+  content = File.read(OpsChain.artefact.load(ARTEFACT_SMOKE_CODE, labels: ['dsl']))
+  raise "Unexpected artefact content: #{content}" unless content.include?(ARTEFACT_SMOKE_MARKER)
+
+  log.info "Loaded labelled artefact: #{content}"
+end
