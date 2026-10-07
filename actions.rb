@@ -258,3 +258,14 @@ action :artefact_load_labelled, description: 'Load a labelled artefact from the 
 
   log.info "Loaded labelled artefact: #{content}"
 end
+
+artefact :smoke_dsl_artefact do
+  path '/tmp/smoke_dsl_artefact_resource.txt'
+end
+
+action artefact_resource_load: ['smoke_dsl_artefact:load'], description: 'Load an artefact with the artefact resource type' do
+  content = File.read('/tmp/smoke_dsl_artefact_resource.txt')
+  raise "Unexpected artefact content: #{content}" unless content.include?(ARTEFACT_SMOKE_MARKER)
+
+  log.info "Loaded artefact via resource: #{content}"
+end
