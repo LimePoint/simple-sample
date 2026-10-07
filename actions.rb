@@ -269,3 +269,15 @@ action artefact_resource_load: ['smoke_dsl_artefact:load'], description: 'Load a
 
   log.info "Loaded artefact via resource: #{content}"
 end
+
+artefact_load :smoke_dsl_artefact_on_definition do
+  code ARTEFACT_SMOKE_CODE
+  path '/tmp/smoke_dsl_artefact_on_definition.txt'
+end
+
+action :artefact_load_resource, description: 'Read an artefact loaded by the artefact_load resource type' do
+  content = File.read('/tmp/smoke_dsl_artefact_on_definition.txt')
+  raise "Unexpected artefact content: #{content}" unless content.include?(ARTEFACT_SMOKE_MARKER)
+
+  log.info "Loaded artefact via artefact_load: #{content}"
+end
