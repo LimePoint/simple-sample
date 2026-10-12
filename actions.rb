@@ -258,3 +258,29 @@ action :artefact_load_labelled, description: 'Load a labelled artefact from the 
 
   log.info "Loaded labelled artefact: #{content}"
 end
+
+ARTIFACT_ALIAS_SMOKE_CODE = 'smoke_alias_dsl'
+ARTIFACT_ALIAS_SMOKE_MARKER = 'artifact-alias-smoke-marker'
+
+artifact_load :smoke_alias_preloaded do
+  code 'smoke_alias_uploaded'
+  path 'alias_preloaded.txt'
+end
+
+artifact :smoke_alias_dsl do
+  path 'alias_resource.txt'
+end
+
+action :artifact_alias_store, description: 'Store an artefact using the artifact alias' do
+  File.write('smoke_alias_dsl.txt', "#{ARTIFACT_ALIAS_SMOKE_MARKER}\n")
+  OpsChain.artifact.store(ARTIFACT_ALIAS_SMOKE_CODE, 'smoke_alias_dsl.txt', labels: ['alias'])
+  log.info 'Stored artifact via alias: smoke_alias_dsl'
+end
+
+action artifact_alias_load: ['smoke_alias_dsl:load'], description: 'Load artefacts using the artifact aliases' do
+  raise 'artifact resource load is missing the marker' unless File.read('alias_resource.txt').include?(ARTIFACT_ALIAS_SMOKE_MARKER)
+  raise 'OpsChain.artifact.load is missing the marker' unless File.read(OpsChain.artifact.load(ARTIFACT_ALIAS_SMOKE_CODE)).include?(ARTIFACT_ALIAS_SMOKE_MARKER)
+  raise 'artifact_load is missing the uploaded marker' unless File.read('alias_preloaded.txt').include?('artifact-alias-upload-marker')
+
+  log.info 'Loaded artifacts via alias: smoke_alias_dsl, smoke_alias_uploaded'
+end
